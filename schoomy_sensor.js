@@ -14,7 +14,7 @@
     getInfo() {
       return {
         id: 'schoomysensor',
-        name: '🌡 スクーミー',
+        name: 'スクーミー',
         color1: '#3AABA8',
         color2: '#2E8EC4',
         blocks: [
