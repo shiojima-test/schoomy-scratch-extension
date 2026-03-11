@@ -5,7 +5,7 @@
     constructor(runtime) {
       this.runtime = runtime;
       this.stopFlag = false;
-      this.temperature = 0;
+      this.sensorData = 0;
       this.isNewData = false;
       this.connected = false;
       this.port = null;
@@ -14,14 +14,14 @@
     getInfo() {
       return {
         id: 'schoomysensor',
-        name: '🌡 スクーミー温度センサー',
+        name: '🌡 スクーミー',
         color1: '#3AABA8',
         color2: '#2E8EC4',
         blocks: [
           { opcode: 'connectSerial', blockType: BlockType.COMMAND, text: 'スクーミーボードに接続する' },
           { opcode: 'disconnectSerial', blockType: BlockType.COMMAND, text: 'スクーミーボードから切断する' },
-          { opcode: 'onNewData', blockType: BlockType.HAT, text: '温度データを受信したとき' },
-          { opcode: 'getTemperature', blockType: BlockType.REPORTER, text: '温度 (℃)' },
+          { opcode: 'onNewData', blockType: BlockType.HAT, text: 'スクーミーからデータを受信したとき' },
+          { opcode: 'getSensorData', blockType: BlockType.REPORTER, text: 'センサーデータ' },
           { opcode: 'isConnected', blockType: BlockType.BOOLEAN, text: '接続中？' }
         ]
       };
@@ -57,7 +57,7 @@
                 buff.splice(0);
                 const num = parseFloat(raw);
                 if (!isNaN(num)) {
-                  this.temperature = Math.round(num * 10) / 10;
+                  this.sensorData = Math.round(num * 10) / 10;
                   this.isNewData = true;
                 }
               }
@@ -74,7 +74,7 @@
 
     disconnectSerial() { this.stopFlag = true; }
     onNewData() { const t = this.isNewData; this.isNewData = false; return t; }
-    getTemperature() { return this.temperature; }
+    getSensorData() { return this.sensorData; }
     isConnected() { return this.connected; }
   }
 
