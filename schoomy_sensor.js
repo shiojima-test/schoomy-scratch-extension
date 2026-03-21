@@ -1,6 +1,9 @@
 (function() {
   const BlockType = Scratch.BlockType;
 
+  const BLE_SERVICE_UUID = '6e400001-b5b3-f393-e0a9-e50e24dcca9e';
+  const BLE_TX_UUID = '6e400003-b5b3-f393-e0a9-e50e24dcca9e';
+
   class SchoomySensor {
     constructor(runtime) {
       this.runtime = runtime;
@@ -9,6 +12,10 @@
       this.isNewData = false;
       this.connected = false;
       this.port = null;
+      this.bleDevice = null;
+      this.bleServer = null;
+      this.bleTXChar = null;
+      this.bleConnected = false;
     }
 
     getInfo() {
@@ -18,8 +25,9 @@
         color1: '#3AABA8',
         color2: '#2E8EC4',
         blocks: [
-          { opcode: 'connectSerial', blockType: BlockType.COMMAND, text: 'スクーミーボードに接続する' },
-          { opcode: 'disconnectSerial', blockType: BlockType.COMMAND, text: 'スクーミーボードから切断する' },
+          { opcode: 'connectSerial', blockType: BlockType.COMMAND, text: 'オレンジボードに接続する（USB）' },
+          { opcode: 'connectBLE', blockType: BlockType.COMMAND, text: 'ブルーボードにBLEで接続する' },
+          { opcode: 'disconnectSerial', blockType: BlockType.COMMAND, text: 'ボードから切断する' },
           { opcode: 'onNewData', blockType: BlockType.HAT, text: 'スクーミーからデータを受信したとき' },
           { opcode: 'getSensorData', blockType: BlockType.REPORTER, text: 'センサーデータ' },
           { opcode: 'isConnected', blockType: BlockType.BOOLEAN, text: '接続中？' }
@@ -36,8 +44,43 @@
         this.connected = true;
         this._readLoop();
       } catch(e) {
-        console.error('[スクーミー] 接続エラー:', e);
+        console.error('[スクーミー] USB接続エラー:', e);
         this.connected = false;
+      }
+    }
+
+    async connectBLE() {
+      try {
+        this.bleDevice = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [BLE_SERVICE_UUID]
+        });
+        this.bleDevice.addEventListener('gattserverdisconnected', () => {
+          this.bleConnected = false;
+          console.log('[スクーミー] BLE切断');
+        });
+        this.bleServer = await this.bleDevice.gatt.connect();
+        const service = await this.bleServer.getPrimaryService(BLE_SERVICE_UUID);
+        this.bleTXChar = await service.getCharacteristic(BLE_TX_UUID);
+        await this.bleTXChar.startNotifications();
+        this.bleTXChar.addEventListener('characteristicvaluechanged', (event) => {
+          const raw = new TextDecoder().decode(event.target.value);
+          const lines = raw.split('\n');
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed === '') continue;
+            const num = parseFloat(trimmed);
+            if (!isNaN(num)) {
+              this.sensorData = Math.round(num * 10) / 10;
+              this.isNewData = true;
+            }
+          }
+        });
+        this.bleConnected = true;
+        console.log('[スクーミー] BLE接続完了');
+      } catch(e) {
+        console.error('[スクーミー] BLE接続エラー:', e);
+        this.bleConnected = false;
       }
     }
 
@@ -72,10 +115,16 @@
       this.connected = false;
     }
 
-    disconnectSerial() { this.stopFlag = true; }
+    disconnectSerial() {
+      this.stopFlag = true;
+      if (this.bleDevice && this.bleDevice.gatt.connected) {
+        this.bleDevice.gatt.disconnect();
+        this.bleConnected = false;
+      }
+    }
     onNewData() { const t = this.isNewData; this.isNewData = false; return t; }
     getSensorData() { return this.sensorData; }
-    isConnected() { return this.connected; }
+    isConnected() { return this.connected || this.bleConnected; }
   }
 
   Scratch.extensions.register(new SchoomySensor());
