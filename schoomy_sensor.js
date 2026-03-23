@@ -30,23 +30,7 @@
           { opcode: 'disconnectSerial', blockType: BlockType.COMMAND, text: 'ボードから切断する' },
           { opcode: 'onNewData', blockType: BlockType.HAT, text: 'スクーミーからデータを受信したとき' },
           { opcode: 'getSensorData', blockType: BlockType.REPORTER, text: 'センサーデータ' },
-          { opcode: 'isConnected', blockType: BlockType.BOOLEAN, text: '接続中？' },
-          { opcode: 'getTemp', blockType: BlockType.REPORTER, text: '温度 (℃)' },
-          { opcode: 'getAX', blockType: BlockType.REPORTER, text: '加速度 X' },
-          { opcode: 'getAY', blockType: BlockType.REPORTER, text: '加速度 Y' },
-          { opcode: 'getAZ', blockType: BlockType.REPORTER, text: '加速度 Z' },
-          { opcode: 'getAbs', blockType: BlockType.REPORTER, text: '合成加速度' },
-          { opcode: 'getGX', blockType: BlockType.REPORTER, text: 'ジャイロ X' },
-          { opcode: 'getGY', blockType: BlockType.REPORTER, text: 'ジャイロ Y' },
-          { opcode: 'getGZ', blockType: BlockType.REPORTER, text: 'ジャイロ Z' },
-          { opcode: 'getSwitch', blockType: BlockType.REPORTER, text: 'スイッチ' },
-          { opcode: 'getTouch', blockType: BlockType.REPORTER, text: 'タッチ' },
-          { opcode: 'getPass', blockType: BlockType.REPORTER, text: '通過センサー' },
-          { opcode: 'getBrightness', blockType: BlockType.REPORTER, text: '明るさ' },
-          { opcode: 'getMoisture', blockType: BlockType.REPORTER, text: '土壌水分' },
-          { opcode: 'getSound', blockType: BlockType.REPORTER, text: '音' },
-          { opcode: 'getMagnet', blockType: BlockType.REPORTER, text: '磁力' },
-          { opcode: 'getDist', blockType: BlockType.REPORTER, text: '距離 (cm)' }
+          { opcode: 'isConnected', blockType: BlockType.BOOLEAN, text: '接続中？' }
         ]
       };
     }
@@ -131,52 +115,15 @@
       }
     }
     _parseLine(line) {
-      const parts = line.split(',');
-      if (parts.length >= 11) {
-        this.val_ax   = parseFloat(parts[0]);
-        this.val_ay   = parseFloat(parts[1]);
-        this.val_az   = parseFloat(parts[2]);
-        this.val_gx   = parseFloat(parts[3]);
-        this.val_gy   = parseFloat(parts[4]);
-        this.val_gz   = parseFloat(parts[5]);
-        this.val_temp = parseFloat(parts[6]);
-        this.val_abs  = parseFloat(parts[7]);
-        this.val_d33  = parseFloat(parts[8]);
-        this.val_a5   = parseFloat(parts[9]);
-        this.val_dist = parseFloat(parts[10]);
-        this.sensorData = this.val_temp;
-      } else {
-        const num = parseFloat(line);
-        if (isNaN(num)) return;
-        this.val_temp = num;
-        this.sensorData = num;
-      }
+      const num = parseFloat(line);
+      if (isNaN(num)) return;
+      this.sensorData = num;
       this.isNewData = true;
     }
 
     onNewData() { const t = this.isNewData; this.isNewData = false; return t; }
     getSensorData() { return this.sensorData; }
     isConnected() { return this.connected || this.bleConnected; }
-
-    getTemp()  { return this.val_temp ?? 0; }
-    getAX()    { return this.val_ax   ?? 0; }
-    getAY()    { return this.val_ay   ?? 0; }
-    getAZ()    { return this.val_az   ?? 0; }
-    getAbs()   { return this.val_abs  ?? 0; }
-    getGX()    { return this.val_gx   ?? 0; }
-    getGY()    { return this.val_gy   ?? 0; }
-    getGZ()    { return this.val_gz   ?? 0; }
-    getD33()   { return this.val_d33  ?? 0; }
-    getA5()    { return this.val_a5   ?? 0; }
-    getDist()  { return this.val_dist ?? 0; }
-
-    getBrightness() { return this.val_a5 ?? 0; }
-    getMoisture()   { return this.val_a5 ?? 0; }
-    getSound()      { return this.val_a5 ?? 0; }
-    getMagnet()     { return this.val_a5 ?? 0; }
-    getSwitch()     { return this.val_d33 ?? 0; }
-    getTouch()      { return this.val_d33 ?? 0; }
-    getPass()       { return this.val_d33 ?? 0; }
   }
 
   Scratch.extensions.register(new SchoomySensor());
