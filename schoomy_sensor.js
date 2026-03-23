@@ -30,7 +30,18 @@
           { opcode: 'disconnectSerial', blockType: BlockType.COMMAND, text: 'ボードから切断する' },
           { opcode: 'onNewData', blockType: BlockType.HAT, text: 'スクーミーからデータを受信したとき' },
           { opcode: 'getSensorData', blockType: BlockType.REPORTER, text: 'センサーデータ' },
-          { opcode: 'isConnected', blockType: BlockType.BOOLEAN, text: '接続中？' }
+          { opcode: 'isConnected', blockType: BlockType.BOOLEAN, text: '接続中？' },
+          { opcode: 'getTemp', blockType: BlockType.REPORTER, text: '温度 (℃)' },
+          { opcode: 'getAX', blockType: BlockType.REPORTER, text: '加速度 X' },
+          { opcode: 'getAY', blockType: BlockType.REPORTER, text: '加速度 Y' },
+          { opcode: 'getAZ', blockType: BlockType.REPORTER, text: '加速度 Z' },
+          { opcode: 'getAbs', blockType: BlockType.REPORTER, text: '合成加速度' },
+          { opcode: 'getGX', blockType: BlockType.REPORTER, text: 'ジャイロ X' },
+          { opcode: 'getGY', blockType: BlockType.REPORTER, text: 'ジャイロ Y' },
+          { opcode: 'getGZ', blockType: BlockType.REPORTER, text: 'ジャイロ Z' },
+          { opcode: 'getD33', blockType: BlockType.REPORTER, text: 'デジタル値' },
+          { opcode: 'getA5', blockType: BlockType.REPORTER, text: 'アナログ値' },
+          { opcode: 'getDist', blockType: BlockType.REPORTER, text: '距離 (cm)' }
         ]
       };
     }
@@ -69,11 +80,7 @@
           for (const line of lines) {
             const trimmed = line.trim();
             if (trimmed === '') continue;
-            const num = parseFloat(trimmed);
-            if (!isNaN(num)) {
-              this.sensorData = Math.round(num * 10) / 10;
-              this.isNewData = true;
-            }
+            this._parseLine(trimmed);
           }
         });
         this.bleConnected = true;
@@ -98,11 +105,7 @@
               if (value[i] === 10 && lastByte === 13) {
                 const raw = new TextDecoder('utf-8').decode(new Uint8Array(buff)).trim();
                 buff.splice(0);
-                const num = parseFloat(raw);
-                if (!isNaN(num)) {
-                  this.sensorData = Math.round(num * 10) / 10;
-                  this.isNewData = true;
-                }
+                this._parseLine(raw);
               }
               lastByte = value[i];
             }
@@ -122,9 +125,45 @@
         this.bleConnected = false;
       }
     }
+    _parseLine(line) {
+      const parts = line.split(',');
+      if (parts.length >= 11) {
+        this.val_ax   = parseFloat(parts[0]);
+        this.val_ay   = parseFloat(parts[1]);
+        this.val_az   = parseFloat(parts[2]);
+        this.val_gx   = parseFloat(parts[3]);
+        this.val_gy   = parseFloat(parts[4]);
+        this.val_gz   = parseFloat(parts[5]);
+        this.val_temp = parseFloat(parts[6]);
+        this.val_abs  = parseFloat(parts[7]);
+        this.val_d33  = parseFloat(parts[8]);
+        this.val_a5   = parseFloat(parts[9]);
+        this.val_dist = parseFloat(parts[10]);
+        this.sensorData = this.val_temp;
+      } else {
+        const num = parseFloat(line);
+        if (isNaN(num)) return;
+        this.val_temp = num;
+        this.sensorData = num;
+      }
+      this.isNewData = true;
+    }
+
     onNewData() { const t = this.isNewData; this.isNewData = false; return t; }
     getSensorData() { return this.sensorData; }
     isConnected() { return this.connected || this.bleConnected; }
+
+    getTemp()  { return this.val_temp ?? 0; }
+    getAX()    { return this.val_ax   ?? 0; }
+    getAY()    { return this.val_ay   ?? 0; }
+    getAZ()    { return this.val_az   ?? 0; }
+    getAbs()   { return this.val_abs  ?? 0; }
+    getGX()    { return this.val_gx   ?? 0; }
+    getGY()    { return this.val_gy   ?? 0; }
+    getGZ()    { return this.val_gz   ?? 0; }
+    getD33()   { return this.val_d33  ?? 0; }
+    getA5()    { return this.val_a5   ?? 0; }
+    getDist()  { return this.val_dist ?? 0; }
   }
 
   Scratch.extensions.register(new SchoomySensor());
