@@ -39,8 +39,13 @@
           { opcode: 'getGX', blockType: BlockType.REPORTER, text: 'ジャイロ X' },
           { opcode: 'getGY', blockType: BlockType.REPORTER, text: 'ジャイロ Y' },
           { opcode: 'getGZ', blockType: BlockType.REPORTER, text: 'ジャイロ Z' },
-          { opcode: 'getD33', blockType: BlockType.REPORTER, text: 'デジタル値' },
-          { opcode: 'getA5', blockType: BlockType.REPORTER, text: 'アナログ値' },
+          { opcode: 'getSwitch', blockType: BlockType.REPORTER, text: 'スイッチ' },
+          { opcode: 'getTouch', blockType: BlockType.REPORTER, text: 'タッチ' },
+          { opcode: 'getPass', blockType: BlockType.REPORTER, text: '通過センサー' },
+          { opcode: 'getBrightness', blockType: BlockType.REPORTER, text: '明るさ' },
+          { opcode: 'getMoisture', blockType: BlockType.REPORTER, text: '土壌水分' },
+          { opcode: 'getSound', blockType: BlockType.REPORTER, text: '音' },
+          { opcode: 'getMagnet', blockType: BlockType.REPORTER, text: '磁力' },
           { opcode: 'getDist', blockType: BlockType.REPORTER, text: '距離 (cm)' }
         ]
       };
@@ -164,6 +169,14 @@
     getD33()   { return this.val_d33  ?? 0; }
     getA5()    { return this.val_a5   ?? 0; }
     getDist()  { return this.val_dist ?? 0; }
+
+    getBrightness() { return this.val_a5 ?? 0; }
+    getMoisture()   { return this.val_a5 ?? 0; }
+    getSound()      { return this.val_a5 ?? 0; }
+    getMagnet()     { return this.val_a5 ?? 0; }
+    getSwitch()     { return this.val_d33 ?? 0; }
+    getTouch()      { return this.val_d33 ?? 0; }
+    getPass()       { return this.val_d33 ?? 0; }
   }
 
   Scratch.extensions.register(new SchoomySensor());
