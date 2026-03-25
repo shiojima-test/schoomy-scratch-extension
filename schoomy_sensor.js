@@ -1,8 +1,10 @@
 (function() {
   const BlockType = Scratch.BlockType;
+  const ArgumentType = Scratch.ArgumentType;
 
   const BLE_SERVICE_UUID = '6e400001-b5b3-f393-e0a9-e50e24dcca9e';
   const BLE_TX_UUID = '6e400003-b5b3-f393-e0a9-e50e24dcca9e';
+  const BLE_RX_UUID = '6e400002-b5b3-f393-e0a9-e50e24dcca9e';
 
   class SchoomySensor {
     constructor(runtime) {
@@ -12,9 +14,11 @@
       this.isNewData = false;
       this.connected = false;
       this.port = null;
+      this.writer = null;
       this.bleDevice = null;
       this.bleServer = null;
       this.bleTXChar = null;
+      this.bleRXChar = null;
       this.bleConnected = false;
     }
 
@@ -30,8 +34,43 @@
           { opcode: 'disconnectSerial', blockType: BlockType.COMMAND, text: 'ボードから切断する' },
           { opcode: 'onNewData', blockType: BlockType.HAT, text: 'スクーミーからデータを受信したとき' },
           { opcode: 'getSensorData', blockType: BlockType.REPORTER, text: 'センサーデータ' },
-          { opcode: 'isConnected', blockType: BlockType.BOOLEAN, text: '接続中？' }
-        ]
+          { opcode: 'isConnected', blockType: BlockType.BOOLEAN, text: '接続中？' },
+          {
+            opcode: 'setDevice',
+            blockType: BlockType.COMMAND,
+            text: '[DEVICE] を [STATE] にする',
+            arguments: {
+              DEVICE: { type: ArgumentType.STRING, menu: 'deviceMenu', defaultValue: 'LED' },
+              STATE:  { type: ArgumentType.STRING, menu: 'stateMenu', defaultValue: 'ON' }
+            }
+          },
+          {
+            opcode: 'show7seg',
+            blockType: BlockType.COMMAND,
+            text: '7SEGに [NUM] を表示する',
+            arguments: {
+              NUM: { type: ArgumentType.NUMBER, defaultValue: 0 }
+            }
+          },
+          {
+            opcode: 'requestData',
+            blockType: BlockType.COMMAND,
+            text: 'スクーミーに最新データをリクエストする'
+          },
+          {
+            opcode: 'getCSVValue',
+            blockType: BlockType.REPORTER,
+            text: 'データ [DATA] の [INDEX] 番目の値',
+            arguments: {
+              DATA:  { type: ArgumentType.STRING, defaultValue: '1.0,2.0,3.0' },
+              INDEX: { type: ArgumentType.NUMBER, defaultValue: 1 }
+            }
+          }
+        ],
+        menus: {
+          deviceMenu: { acceptReporters: true, items: ['LED', 'BUZZER'] },
+          stateMenu:  { acceptReporters: true, items: ['ON', 'OFF'] }
+        }
       };
     }
 
@@ -41,6 +80,7 @@
         const serial = navigator.serial || (navigator.serial = window.serial);
         this.port = await serial.requestPort();
         await this.port.open({ baudRate: 9600, flowControl: 'hardware' });
+        this.writer = this.port.writable.getWriter();
         this.connected = true;
         this._readLoop();
       } catch(e) {
@@ -57,11 +97,13 @@
         });
         this.bleDevice.addEventListener('gattserverdisconnected', () => {
           this.bleConnected = false;
+          this.bleRXChar = null;
           console.log('[スクーミー] BLE切断');
         });
         this.bleServer = await this.bleDevice.gatt.connect();
         const service = await this.bleServer.getPrimaryService(BLE_SERVICE_UUID);
         this.bleTXChar = await service.getCharacteristic(BLE_TX_UUID);
+        this.bleRXChar = await service.getCharacteristic(BLE_RX_UUID);
         await this.bleTXChar.startNotifications();
         this.bleTXChar.addEventListener('characteristicvaluechanged', (event) => {
           const raw = new TextDecoder().decode(event.target.value);
@@ -109,11 +151,23 @@
 
     disconnectSerial() {
       this.stopFlag = true;
+      if (this.writer) {
+        this.writer.releaseLock();
+        this.writer = null;
+      }
       if (this.bleDevice && this.bleDevice.gatt.connected) {
         this.bleDevice.gatt.disconnect();
         this.bleConnected = false;
+        this.bleRXChar = null;
       }
     }
+
+    async _sendCmd(str) {
+      const data = new TextEncoder().encode(str + '\n');
+      if (this.writer) await this.writer.write(data);
+      if (this.bleRXChar) await this.bleRXChar.writeValue(data);
+    }
+
     _parseLine(line) {
       const num = parseFloat(line);
       if (isNaN(num)) return;
@@ -124,6 +178,16 @@
     onNewData() { const t = this.isNewData; this.isNewData = false; return t; }
     getSensorData() { return this.sensorData; }
     isConnected() { return this.connected || this.bleConnected; }
+
+    async setDevice(args) { await this._sendCmd(args.DEVICE + '_' + args.STATE); }
+    async show7seg(args) { await this._sendCmd('NUM:' + args.NUM); }
+    async requestData() { await this._sendCmd('GET'); }
+
+    getCSVValue(args) {
+      const parts = String(args.DATA).split(',');
+      const i = Math.round(args.INDEX) - 1;
+      return parts[i] !== undefined ? parseFloat(parts[i]) : 0;
+    }
   }
 
   Scratch.extensions.register(new SchoomySensor());
