@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スクーミー Scratch拡張機能 v2.0 — 担当者向け手順書</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Meiryo","メイリオ",sans-serif;background:#F5E4C4;color:#1f2a30;line-height:1.8}
+.wrap{max-width:860px;margin:0 auto;background:#fff;box-shadow:0 2px 20px rgba(0,0,0,.08)}
+.header{background:linear-gradient(135deg,#1f2a30,#2d3439);padding:26px 34px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.header h1{color:#fff;font-size:21px;font-weight:700;letter-spacing:.02em}
+.header .ver{color:#3AABA8;font-size:13px;font-weight:700;margin-top:4px}
+.header img{height:52px;width:auto;flex-shrink:0}
+.subbar{display:flex;height:9px}
+.subbar i{display:block}
+.subbar .c1{width:30.5%;background:#3AABA8}
+.subbar .c2{width:45.7%;background:#F5E4C4}
+.subbar .c3{width:8.4%;background:#E88A0A}
+.subbar .c4{width:15.5%;background:#2E8EC4}
+.body{padding:34px}
+h2{font-size:17px;font-weight:700;color:#1a3a5c;margin:34px 0 12px;padding-bottom:7px;border-bottom:3px solid #3AABA8}
+h2:first-child{margin-top:0}
+h3{font-size:14px;font-weight:700;color:#2d3439;margin:20px 0 8px}
+p{font-size:14px;margin-bottom:12px}
+ol,ul{margin:0 0 14px 22px;font-size:14px}
+li{margin-bottom:7px}
+.url{background:#1f2a30;color:#fff;padding:13px 16px;border-radius:7px;font-family:monospace;font-size:13px;word-break:break-all;margin:10px 0 16px;user-select:all}
+.note{background:#F5E4C4;border-left:5px solid #E88A0A;padding:13px 17px;font-size:13px;margin:16px 0}
+.warn{background:#fdf0ec;border-left:5px solid #c0392b;padding:13px 17px;font-size:13px;margin:16px 0}
+table{width:100%;border-collapse:collapse;margin:12px 0 18px;font-size:13px}
+th{background:#1a3a5c;color:#fff;padding:9px 12px;text-align:left;font-weight:700}
+td{border-bottom:1px solid #e4e8ea;padding:9px 12px;vertical-align:top}
+.code{background:#f4f6f7;border:1px solid #dfe4e6;border-radius:7px;padding:15px 18px;font-family:monospace;font-size:13px;white-space:pre;overflow-x:auto;margin:10px 0 16px;line-height:1.7}
+.footer{background:linear-gradient(135deg,#1f2a30,#2d3439);color:#9fb0b4;padding:18px 34px;font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.footer a{color:#3AABA8;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div>
+      <h1>スクーミー Scratch拡張機能</h1>
+      <div class="ver">v2.0 ／ 担当者向け手順書</div>
+    </div>
+    <img src="assets/schoomy_logo.png" alt="SchooMy">
+  </div>
+  <div class="subbar"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i></div>
+
+  <div class="body">
+
+    <h2>これは何か</h2>
+    <p>オレンジボードのセンサーの値をScratchで受け取り、さらに複数の班の値を1台のPCに集めて合計や平均を出すための拡張機能です。スイッチを押した回数を数える使い方も、温度を持ち寄る使い方も、同じ仕組みで動きます。</p>
+
+    <h2>拡張機能のURL</h2>
+    <p>Scratchに読み込ませるURLです。このページではなく、下のアドレスを使ってください。</p>
+    <div class="url">https://shiojima-test.github.io/schoomy-scratch-extension/schoomy_sensor_v2_0.js</div>
+
+    <h3>読み込み手順</h3>
+    <ol>
+      <li><a href="https://shiojima-test.github.io/schoomy-scratch-gui/">スクーミーワールドスクラッチ</a> を開く</li>
+      <li>画面左下の「拡張機能を追加」ボタンを押す</li>
+      <li>一覧のいちばん最初にある「Choose an extension（For developers）」を選ぶ</li>
+      <li>URL入力欄が出るので、上のアドレスを貼り付けてOK</li>
+    </ol>
+    <div class="note">ブラウザはChromeまたはEdgeを使ってください。Web Serialに対応していないブラウザではボードに接続できません。</div>
+
+    <h2>共有サーバーの準備</h2>
+    <p>班をまたいで値を集めるには、中継役のサーバーが1つ必要です。イベントごとに1回だけ用意します。</p>
+    <ol>
+      <li>script.google.com で新しいプロジェクトを作る</li>
+      <li>このリポジトリの <strong>gas/Code.gs</strong> の中身をすべて貼り付ける</li>
+      <li>「デプロイ」→「新しいデプロイ」→ 種類は「ウェブアプリ」</li>
+      <li>実行するユーザー＝<strong>自分</strong>、アクセスできるユーザー＝<strong>全員</strong></li>
+      <li>発行された <code>/exec</code> で終わるURLを控える</li>
+    </ol>
+    <div class="warn">このURLを知っている人は誰でも値の書き込みとリセットができます。一般公開はせず、イベント担当者のみで扱ってください。班のScratchファイル（.sb3）を配布すると、その中にURLが残ります。</div>
+
+    <h2>Scratchの組み方</h2>
+
+    <h3>班側のPC（オレンジボードを接続する）</h3>
+    <div class="code">緑の旗が押されたとき
+  共有サーバーを〔控えたURL〕にする
+  班を〔A〕にする
+  オレンジボードに接続する（USB）
+  変数「自分の数」を 0 にする
+
+スイッチが押されたとき
+  変数「自分の数」を 1 ずつ変える
+  自分の値〔自分の数〕を送る</div>
+    <p>班ごとに「班を〔　〕にする」の中身だけを変えます。A・B・Cでも、1組・2組でも、チーム名でもかまいません。事前の班数登録は不要です。</p>
+
+    <h3>集計用のPC（ボードは不要）</h3>
+    <div class="code">緑の旗が押されたとき
+  共有サーバーを〔控えたURL〕にする
+  ずっと
+    共有データを取り込む
+    1 秒待つ</div>
+    <p>あとは「合計」「平均」「班の数」などのブロックにチェックを入れて画面に表示するか、「〔　〕番目の班の名前」「〔　〕番目の班の値」を使って班の一覧を描いてください。</p>
+
+    <h3>温度など、数え上げ以外に使う場合</h3>
+    <p>「スイッチが押されたとき」は使わず、次のようにします。</p>
+    <div class="code">緑の旗が押されたとき
+  共有サーバーを〔控えたURL〕にする
+  班を〔A〕にする
+  オレンジボードに接続する（USB）
+  ずっと
+    自分の値〔センサーデータ〕を送る
+    3 秒待つ</div>
+    <div class="note">「スイッチが押されたとき」は、値が0から0以外に変わった瞬間だけ反応します。温度センサーのように常に値が流れ続けるセンサーでは反応しません。</div>
+
+    <h2>ブロック一覧</h2>
+    <table>
+      <tr><th style="width:38%">ブロック</th><th>説明</th></tr>
+      <tr><td>オレンジボードに接続する（USB）</td><td>ボードを選ぶ画面が出ます。9600bpsで接続します</td></tr>
+      <tr><td>ボードから切断する</td><td>接続を終了します</td></tr>
+      <tr><td>接続中？</td><td>つながっていれば「はい」</td></tr>
+      <tr><td>スクーミーからデータを受信したとき</td><td>値が届くたびに動きます</td></tr>
+      <tr><td>スイッチが押されたとき</td><td>0から0以外に変わった瞬間だけ動きます</td></tr>
+      <tr><td>センサーデータ</td><td>いちばん新しい値</td></tr>
+      <tr><td>エラー内容</td><td>うまくいかないときの原因。画面に出して確認します</td></tr>
+      <tr><td>共有サーバーを〔　〕にする</td><td>GASのURLを設定します</td></tr>
+      <tr><td>班を〔　〕にする</td><td>自分の班の名前を決めます</td></tr>
+      <tr><td>自分の値〔　〕を送る</td><td>サーバーに書き込みます</td></tr>
+      <tr><td>共有データを取り込む</td><td>全班の最新の値を読み込みます</td></tr>
+      <tr><td>班の数</td><td>いま参加している班の数</td></tr>
+      <tr><td>〔　〕番目の班の名前 ／ 値</td><td>班の一覧を順番に取り出します</td></tr>
+      <tr><td>〔　〕班の値</td><td>班の名前を直接指定して取り出します</td></tr>
+      <tr><td>合計 ／ 平均 ／ 最大 ／ 最小</td><td>取り込んだ全班の値から計算します</td></tr>
+      <tr><td>みんなの値をリセットする</td><td>全部消して0班の状態に戻します</td></tr>
+    </table>
+
+    <h2>うまくいかないとき</h2>
+    <table>
+      <tr><th style="width:38%">症状</th><th>確認すること</th></tr>
+      <tr><td>ボードにつながらない</td><td>ChromeまたはEdgeか。他のタブやスクーミーブロックエディタが同じボードをつかんでいないか</td></tr>
+      <tr><td>値が0のまま動かない</td><td>ボード側のプログラムが値を送る状態になっているか。「センサーデータ」を画面に出して確認</td></tr>
+      <tr><td>1回押しただけで数字が飛ぶ</td><td>「データを受信したとき」ではなく「スイッチが押されたとき」を使っているか</td></tr>
+      <tr><td>合計が変わらない</td><td>「エラー内容」を画面に出す。URLの末尾が /exec か。GASのアクセス権が「全員」か</td></tr>
+      <tr><td>コードを直したのに反映されない</td><td>GASは「新しいデプロイ」をやり直さないとURLの中身が変わりません</td></tr>
+    </table>
+
+  </div>
+
+  <div class="footer">
+    <span>&copy; SchooMy, Inc.</span>
+    <span>fox.schoomy.com</span>
+  </div>
+
+</div>
+</body>
+</html>
